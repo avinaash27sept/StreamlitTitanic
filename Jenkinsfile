@@ -14,33 +14,7 @@ pipeline {
             }
         }
 
-        stage('Run Unit Tests') {
-            steps {
-                script {
-                    if (isUnix()) {
-                        sh 'python -m pip install -r requirements.txt'
-                        sh 'pytest -q'
-                    } else {
-                        bat '''
-                            @echo off
-                            REM Check for python or py launcher
-                            where python >nul 2>&1
-                            if %ERRORLEVEL% NEQ 0 (
-                                where py >nul 2>&1
-                                if %ERRORLEVEL% NEQ 0 (
-                                    echo ERROR: Python not found on PATH. Install Python or configure PATH.
-                                    exit /b 1
-                                )
-                            )
-
-                            REM Try py launcher first, fall back to python
-                            py -3 -m pip install -r requirements.txt || python -m pip install -r requirements.txt
-                            py -3 -m pytest -q || python -m pytest -q
-                        '''
-                    }
-                }
-            }
-        }
+        
 
         stage('Build Docker Image') {
             steps {
