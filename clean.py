@@ -22,4 +22,4 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
     if "Embarked" in df.columns:
         df["Embarked"] = df["Embarked"].map({"S": 0, "C": 1, "Q": 2}).fillna(0).astype(int)
 
-    return df
+    # return df
