@@ -21,8 +21,18 @@ pipeline {
                         sh 'python -m pip install -r requirements.txt'
                         sh 'pytest -q'
                     } else {
-                        bat 'python -m pip install -r requirements.txt'
-                        bat 'pytest -q'
+                        bat '''
+                            @echo off
+                            REM Check for python or py launcher
+                            where python >nul 2>&1 || where py >nul 2>&1 || (
+                                echo ERROR: Python not found on PATH. Install Python or configure PATH.&
+                                exit 1
+                            )
+
+                            REM Try py launcher first, fall back to python
+                            py -3 -m pip install -r requirements.txt || python -m pip install -r requirements.txt
+                            py -3 -m pytest -q || python -m pytest -q
+                        '''
                     }
                 }
             }
