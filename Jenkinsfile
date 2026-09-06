@@ -24,9 +24,13 @@ pipeline {
                         bat '''
                             @echo off
                             REM Check for python or py launcher
-                            where python >nul 2>&1 || where py >nul 2>&1 || (
-                                echo ERROR: Python not found on PATH. Install Python or configure PATH.&
-                                exit 1
+                            where python >nul 2>&1
+                            if %ERRORLEVEL% NEQ 0 (
+                                where py >nul 2>&1
+                                if %ERRORLEVEL% NEQ 0 (
+                                    echo ERROR: Python not found on PATH. Install Python or configure PATH.
+                                    exit /b 1
+                                )
                             )
 
                             REM Try py launcher first, fall back to python
