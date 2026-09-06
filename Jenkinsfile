@@ -14,6 +14,20 @@ pipeline {
             }
         }
 
+        stage('Run Unit Tests') {
+            steps {
+                script {
+                    if (isUnix()) {
+                        sh 'python -m pip install -r requirements.txt'
+                        sh 'pytest -q'
+                    } else {
+                        bat 'python -m pip install -r requirements.txt'
+                        bat 'pytest -q'
+                    }
+                }
+            }
+        }
+
         stage('Build Docker Image') {
             steps {
                 script {
