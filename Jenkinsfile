@@ -22,12 +22,11 @@ pipeline {
                     if (isUnix()) {
                         sh "docker build -t ${DOCKER_IMAGE} ."
                     } else {
-                        bat 'echo Skipping Docker build on Windows agent'
+                        bat "docker build -t ${DOCKER_IMAGE} ."
                     }
                 }
             }
         }
-
         stage('Smoke Test') {
             steps {
                 script {
@@ -53,7 +52,34 @@ PY
                             docker stop ${APP_NAME}-test
                         '''
                     } else {
-                        bat 'echo Skipping Smoke Test on Windows agent'
+                        bat '''
+                            docker run -d --rm --name %APP_NAME%-test -p 8501:8501 %DOCKER_IMAGE%
+                            powershell -NoProfile -Command "$deadline = (Get-Date).AddSeconds(60); do { try { $response = Invoke-WebRequest -UseBasicParsing http://localhost:8501/_stcore/health; if ($response.StatusCode -eq 200) { exit 0 } } catch {} Start-Sleep -Seconds 2 } while ((Get-Date) -lt $deadline); exit 1"
+                            docker stop %APP_NAME%-test
+                        '''
+                    }
+                }
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            when {
+                environment name: 'DEPLOY_TO_K8S', value: 'true'
+            }
+            steps {
+                script {
+                    if (isUnix()) {
+                        sh '''
+                            kubectl apply -f k8s/deployment.yaml
+                            kubectl set image deployment/titanic-streamlit titanic-streamlit=${DOCKER_IMAGE}
+                            kubectl rollout status deployment/titanic-streamlit --timeout=120s
+                        '''
+                    } else {
+                        bat '''
+                            kubectl apply -f k8s\deployment.yaml
+                            kubectl set image deployment/titanic-streamlit titanic-streamlit=%DOCKER_IMAGE%
+                            kubectl rollout status deployment/titanic-streamlit --timeout=120s
+                        '''
                     }
                 }
             }

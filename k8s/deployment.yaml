@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: titanic-streamlit
+  labels:
+    app: titanic-streamlit
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: titanic-streamlit
+  template:
+    metadata:
+      labels:
+        app: titanic-streamlit
+    spec:
+      containers:
+        - name: titanic-streamlit
+          image: titanic-streamlit:local
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8501
+          readinessProbe:
+            httpGet:
+              path: /_stcore/health
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /_stcore/health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: titanic-streamlit
+spec:
+  selector:
+    app: titanic-streamlit
+  type: NodePort
+  ports:
+    - name: http
+      port: 8501
+      targetPort: http
+      nodePort: 30081
